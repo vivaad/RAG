@@ -1,94 +1,190 @@
-LangChain RAG Application with Gemini & ChromaDB
 
-This project is a complete Retrieval-Augmented Generation (RAG) application built using Python. It leverages the LangChain framework to connect a Google Gemini language model with a local ChromaDB vector store. The application can ingest and process both Markdown and PDF documents to answer questions based on their content.
-Features
+# Fully Local RAG Application with LangChain & LlamaCpp
 
-    LLM Integration: Uses Google's Gemini Pro model for powerful and coherent text generation.
+This project is a **self-contained Retrieval-Augmented Generation (RAG) application** that runs **entirely on your local machine**.
+It uses **LangChain** to orchestrate the pipeline, **ChromaDB** for embeddings storage, and a **local LLM (Phi-2 via LlamaCpp)** to generate answers from your private PDF and Markdown documents.
 
-    Vector Store: Employs ChromaDB for efficient, local storage and retrieval of document embeddings.
+✅ **No API keys, no external services, no costs — 100% local & private.**
 
-    Document Processing: Capable of loading and processing both .pdf and .md files.
+---
 
-    Secure API Key Management: Uses a .env file to keep your Google API key secure.
+## ✨ Key Features
 
-    Modular Code: Separated logic for data ingestion (ingest.py) and the main application (app.py).
+* 🔒 **100% Local & Private** – Your data never leaves your machine.
+* ⚡ **LangChain-Powered** – Flexible orchestration for retrieval + generation.
+* 🧠 **Local Embeddings** – Uses [SentenceTransformers](https://www.sbert.net/) (`all-MiniLM-L6-v2`) on CPU/GPU.
+* 🤖 **Local LLM (Phi-2)** – Runs with [LlamaCpp](https://github.com/abetlen/llama-cpp-python), optimized for laptops.
+* 💾 **Persistent Vector Store** – Stores embeddings in **ChromaDB**, only reprocesses new/changed files.
+* 📄 **Multi-Format Support** – Works with both **PDF** and **Markdown** files.
 
-Project Structure
+---
 
-.
-├── app.py              # Main application to run the RAG chain
-├── ingest.py           # Script to process documents and build the vector store
-├── requirements.txt    # Python dependencies
-├── .env                # For storing your API key
-├── sample_data/        # Directory for your source documents
+## 📂 Project Structure
+
+```
+rag_project/
+├── models/
+│   └── phi-2.Q4_K_M.gguf      # (download & place here)
+├── sample_data/
 │   ├── sample.md
-│   └── sample.pdf      # (You need to create this file)
-└── README.md
+│   └── sample.pdf
+├── chroma_db/                 # (auto-generated after ingestion)
+├── app.py                     # Main application (RAG pipeline)
+├── ingest.py                  # Document ingestion & vector store builder
+├── requirements.txt           # Python dependencies
+└── README.md                  # Documentation
+```
 
-How to Set Up and Run
-1. Prerequisites
+---
 
-    Python 3.8 or higher
+## ⚙️ Setup Instructions
 
-    An active Google API key with the Gemini API enabled. You can get one from Google AI Studio.
+### 1. Clone the Repository
 
-2. Clone the Repository
+```bash
+git clone git@github.com:vivaad/RAG.git
+cd RAG
+```
 
-Clone this project to your local machine.
-3. Install Dependencies
+### 2. Create a Virtual Environment (Recommended)
 
-Navigate to the project directory and install the required Python packages:
+```bash
+python -m venv .venv
+# Activate it:
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+```
 
+### 3. Download the Local LLM (Phi-2)
+
+* Create a `models/` directory inside the project folder.
+* Download the **Phi-2 (quantized) model file**:
+  👉 [phi-2.Q4_K_M.gguf](https://huggingface.co/microsoft/phi-2) (~1.6 GB).
+* Place it inside `models/`.
+
+### 4. Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-4. Set Up Your API Key
+⚠️ Note: `llama-cpp-python` may take time to install as it compiles for your system.
 
-    Rename the provided .env file if necessary.
+---
 
-    Open the .env file and replace "YOUR_API_KEY" with your actual Google API Key.
+## ▶️ How to Use
 
-GOOGLE_API_KEY="AIzaSy...your...key"
+### Step 1: Add Your Documents
 
-5. Add Your Documents
+* Place `.pdf` and `.md` files inside `sample_data/`.
+* Example:
 
-    Place any Markdown (.md) or PDF (.pdf) files you want to query inside the sample_data directory.
+```
+sample_data/
+├── sample.md
+└── sample.pdf
+```
 
-    A sample.md file is included.
+### Step 2: Ingest the Documents
 
-    Important: You'll need to add your own PDF file, for example, sample.pdf, to this directory to test PDF processing.
+Run:
 
-6. Ingest Your Data
-
-Before running the main application, you need to process your documents and build the vector store. Run the ingestion script:
-
+```bash
 python ingest.py
+```
 
-This will create a chroma_db directory in your project folder containing the document embeddings. You only need to run this script whenever you add, remove, or change the documents in the sample_data directory.
-7. Run the Application
+* This will process your documents, create embeddings, and store them in `chroma_db/`.
+* On the **first run**, it downloads the SentenceTransformers model (~230 MB).
 
-Now you're ready to start asking questions! Run the main application:
+### Step 3: Run the Application
 
+```bash
 python app.py
+```
 
-The application will initialize, and you can start typing your questions into the command line. Type exit to quit the application.
-Example Interaction
+* The first run may take a while to load the Phi-2 model into RAM.
+* Then you’ll see:
 
-$ python app.py
-Initializing RAG application...
+```
 RAG application ready. Ask a question or type 'exit' to quit.
+```
 
-Your question: What are the benefits of RAG?
+---
 
-Searching for relevant documents and generating an answer...
+## 💡 Example Interaction
+
+```
+Your question: What is RAG?
 
 --- Answer ---
-Retrieval-Augmented Generation (RAG) offers several key benefits:
-
-* **Reduces Hallucinations**: It minimizes the chances of the model generating incorrect or fabricated "facts" by grounding the LLM's response in specific, retrieved information.
-* **Access to Current Information**: RAG models can overcome the knowledge cutoff limitation of statically trained LLMs by retrieving the latest information.
-* **Increased Trust and Transparency**: Users can verify the information as they can be shown the source documents that were used to generate an answer.
+Retrieval-Augmented Generation (RAG) is a technique that enhances language models
+by retrieving relevant context from external documents before generating a response.
 
 --- Sources ---
 - sample_data/sample.md
+```
 
+---
 
+## 🛠️ Tech Stack
+
+* [LangChain](https://www.langchain.com/)
+* [ChromaDB](https://www.trychroma.com/)
+* [LlamaCpp](https://github.com/abetlen/llama-cpp-python)
+* [Microsoft Phi-2](https://huggingface.co/microsoft/phi-2)
+* [SentenceTransformers](https://www.sbert.net/)
+
+---
+
+## ⚡ Performance Tips
+
+Running local models can be demanding. Here’s how to optimize:
+
+### 🔹 1. Use Quantized Models
+
+* You’re already using `phi-2.Q4_K_M.gguf` (quantized), which reduces memory usage.
+* If you have more RAM/GPU power, try higher-precision versions (e.g., `Q5`, `Q8`) for better accuracy.
+
+### 🔹 2. Run on GPU (if available)
+
+* Install llama-cpp-python with GPU support:
+
+```bash
+CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python --force-reinstall --upgrade --no-cache-dir
+```
+
+* This enables CUDA acceleration (NVIDIA GPUs).
+
+### 🔹 3. Control Context Length
+
+* Large context windows increase memory usage.
+* Adjust parameters in `app.py`, e.g.:
+
+```python
+n_ctx = 2048   # reduce if running out of RAM
+```
+
+### 🔹 4. Batch Ingestion
+
+* If you have many PDFs, ingest them in smaller batches to avoid memory overload.
+
+### 🔹 5. Monitor System Resources
+
+* On Linux/macOS:
+
+```bash
+htop
+```
+
+* On Windows: use Task Manager.
+
+---
+
+## ✅ Advantages of Local RAG
+
+* No API keys or hidden costs
+* Total data privacy
+* Works offline
+* Lightweight enough for standard laptops
