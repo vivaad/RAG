@@ -8,6 +8,8 @@ from langchain_chroma import Chroma
 from langchain_community.llms import LlamaCpp
 from langchain_huggingface import HuggingFaceEmbeddings
 
+from modules.retriver_filter import ScoreFilteredRetriever
+
 # Load environment variables
 load_dotenv()
 
@@ -77,12 +79,21 @@ def main():
     Helpful Answer:
     """
     QA_PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+   
+    #Custom Retriver
+    retriever = ScoreFilteredRetriever(
+        vectorstore=vector_store,
+        k=3,                 # what you pass to the QA chain
+        fetch_k=10,          # fetch 10 candidates from the DB first
+        min_score=None,       
+        score_is_distance=True
+    )
 
     # Set up the RetrievalQA chain
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
-        retriever=vector_store.as_retriever(search_kwargs={"k": 4}),
+        retriever=retriever,
         return_source_documents=True,
         chain_type_kwargs={"prompt": QA_PROMPT}
     )

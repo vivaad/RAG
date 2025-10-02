@@ -12,8 +12,16 @@ main.py
 
 #env variable
 .env
+.gitignore
 
 #data 
 sample_data/
 models/
 chroma_db
+
+#uv
+.python-version
+pyproject.toml
+uv.lock
+
+
