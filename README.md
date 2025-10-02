@@ -29,7 +29,7 @@ rag_project/
 │   ├── sample.md
 │   └── sample.pdf
 ├── chroma_db/                 # (auto-generated after ingestion)
-├── app.py                     # Main application (RAG pipeline)
+├── main.py                     # Main application (RAG pipeline)
 ├── ingest.py                  # Document ingestion & vector store builder
 ├── requirements.txt           # Python dependencies
 └── README.md                  # Documentation
@@ -101,7 +101,7 @@ python ingest.py
 ### Step 3: Run the Application
 
 ```bash
-python app.py
+python main.py
 ```
 
 * The first run may take a while to load the Phi-2 model into RAM.

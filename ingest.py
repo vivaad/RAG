@@ -1,12 +1,10 @@
 
 import os
-import shutil
 from dotenv import load_dotenv
 from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader, UnstructuredMarkdownLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from tqdm import tqdm
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 
 # Load environment variables from .env file (for app.py)
 load_dotenv()
@@ -14,7 +12,6 @@ load_dotenv()
 # --- Configuration ---
 DATA_PATH = "sample_data"
 CHROMA_DB_PATH = "chroma_db"
-# Model for local embeddings
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 
 def load_documents():
@@ -54,7 +51,6 @@ def main():
 
     # Step 1: Initialize local embeddings model and text splitter
     print(f"Initializing local embeddings model: {EMBEDDING_MODEL_NAME}")
-    print("Note: The model will be downloaded automatically on the first run.")
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
 
@@ -69,9 +65,17 @@ def main():
     if os.path.exists(CHROMA_DB_PATH):
         print("Existing vector store found. Loading and checking for new documents...")
         vector_store = Chroma(persist_directory=CHROMA_DB_PATH, embedding_function=embeddings)
-        existing_sources = set(meta['source'] for meta in vector_store.get().get('metadatas', []))
-        
-        new_documents = [doc for doc in all_fs_documents if doc.metadata['source'] not in existing_sources]
+
+        # Keep uniqueness at (source, page) level
+        existing_sources = set(
+            (meta.get("source"), meta.get("page"))
+            for meta in vector_store.get().get("metadatas", [])
+        )
+
+        new_documents = [
+            doc for doc in all_fs_documents
+            if (doc.metadata.get("source"), doc.metadata.get("page")) not in existing_sources
+        ]
 
         if not new_documents:
             print("\nNo new documents to add. Database is up-to-date.")
@@ -79,7 +83,12 @@ def main():
             
         print(f"\nFound {len(new_documents)} new documents to ingest.")
         texts_to_add = text_splitter.split_documents(new_documents)
-        
+
+        # Ensure metadata includes page
+        for t in texts_to_add:
+            if "page" not in t.metadata:
+                t.metadata["page"] = t.metadata.get("page", None)
+
         print(f"Adding {len(texts_to_add)} new chunks to the vector store...")
         vector_store.add_documents(texts_to_add)
 
@@ -87,7 +96,11 @@ def main():
         # --- LOGIC FOR A NEW DATABASE ---
         print("No existing vector store found. Creating a new one...")
         texts = text_splitter.split_documents(all_fs_documents)
-        
+
+        for t in texts:
+            if "page" not in t.metadata:
+                t.metadata["page"] = t.metadata.get("page", None)
+
         if not texts:
             print("No text chunks to process. Exiting.")
             return
@@ -107,4 +120,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

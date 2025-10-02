@@ -1,5 +1,6 @@
 langchain
 langchain-community
+langchain-chroma
 langchain-google-genai
 chromadb
 pypdf
@@ -8,3 +9,4 @@ python-dotenv
 tqdm
 sentence-transformers
 llama-cpp-python
+langchain-huggingface
